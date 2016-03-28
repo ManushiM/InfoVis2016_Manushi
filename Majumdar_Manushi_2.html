@@ -1,0 +1,43 @@
+<html>
+    <head>
+        <title>Gapminder Wealth and Health</title>
+        <style>
+            body{
+                margin: 0px;
+            }
+            h1{
+                color: white;
+                background-color: black;
+            }
+            h2{
+                padding: 10px;
+            }
+            #page{
+                padding: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Gapiminder - Wealth and Health of Nations</h1>
+        <h2>Countries</h2>
+        <div id="page">
+        </div>
+    </body>
+   <script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script>
+        var viz = d3.select("#page");
+        d3.json("data.json", function(error, result) {
+            input = result;
+            render();
+        })
+        
+        function render() {
+            var changes = viz.selectAll("div")
+                .data(input, function(x) { return x.name });
+            
+            changes.enter()
+                .append("div")
+                .text(function(x) { return x.name });
+        }
+    </script>
+</html>

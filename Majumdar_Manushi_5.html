@@ -1,0 +1,219 @@
+<html>
+    <head>
+        <title>Gapminer</title>
+        <style>
+            body {
+                margin: 0px;
+                font-family: "Arial"
+            }
+            #title {
+                background-color: black;
+                color: white;
+                padding: 10px
+            }
+            h1{
+                margin: 0
+            }
+            .countries {
+                list-style: none;
+                padding: 10px;
+                float: left
+            }
+            circle {
+                opacity: 0.7
+            }
+            .domain {
+                fill: none;
+                stroke: #000
+            }
+            .tick {
+                font-size: 12
+            }
+            .tick line {
+                stroke: #ccc
+            }
+            #tooltip {
+                position: absolute;
+                top: 0;
+                left: 0;
+                background-color: rgba(255,255,255,0.8);
+                padding: 5;
+                border: solid 1px black;
+                visibility: hidden;
+                opacity: 0
+                transition: all 0.5s
+            }
+        </style>
+    </head>
+    <body>
+        <div id="title">
+            <h1>Gapminder - Wealth and Health of Nations</h1>
+        </div>
+        <div>
+            <ul class="countries" id="countries"></ul>
+            <svg id="viz"></svg>
+        </div>
+        <input type="range" 
+               min="1900" 
+               max="2009"
+               value="2008" 
+               id="yearSelect"
+               onchange="setYear(this.value)"
+               style="width: 500" >
+        <div id="tooltip">Tooltip</div>
+    </body>
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script>
+        //Parameters
+        var year = 2008;
+        var chartWidth = 500;
+        var chartHeight = 400;
+        var chartMargin = {top: 20, left: 40, right: 20, bottom: 20}
+        var chartInnerHeight = chartHeight - chartMargin.top - chartMargin.bottom;
+        var chartInnerWidth = chartWidth - chartMargin.left - chartMargin.right;
+        
+        //Global Variables
+        var input = [];
+        var list = d3.select("#countries");
+        var chart = d3.select("#viz");
+        
+        var yearLabel = chart.append("text")
+                            .text(year)
+                            .style({"font-size": 50, fill: "#ccc"})
+                            .attr("dx", 50)
+                            .attr("dy", 70)
+        
+        var xAxisGroup = chart.append("g")
+            .attr("transform", "translate(" + chartMargin.left + "," + (chartInnerHeight + chartMargin.top) + ")");
+        var yAxisGroup = chart.append("g")
+            .attr("transform", "translate(" + chartMargin.left + "," + chartMargin.top + ")");
+        var dotGroup = chart.append("g")
+            .attr("transform", "translate(" + chartMargin.left + "," + chartMargin.top + ")");
+        
+        //Highlight global function
+        function highlight(name) {
+            dotGroup.selectAll("circle")
+                .style("stroke", function(x, i) { return x.name == name ? "black" : undefined })
+            
+            list.selectAll("li")
+                .style("background-color", function(x,i) {
+                    return x.name == name ? "black" : undefined })
+                .style("color", function(x,i) {
+                    return x.name == name ? "white" : undefined
+            })
+        }
+        
+          //unHighlight global function
+        function unHighlight(name) {
+            dotGroup.selectAll("circle")
+                .style("stroke", undefined)
+            
+            list.selectAll("li")
+                .style("background-color", undefined)
+                .style("color", undefined)
+        }
+        
+        //Set Year
+        function setYear(newYear) {
+            year = newYear;
+            yearLabel.text(year);
+            render(input);
+        }
+        
+        
+        //Render section
+        function renderList(input){
+            var selection = list.selectAll("li")
+                .data(input, function(x) {return x.name });
+            selection.enter()
+                .append("li")
+                .attr("class", "listItem")
+                .text(function(x) { return x.name })  
+                .on("mouseenter", function(x,i) {
+                highlight(x.name)
+            })
+                .on("mouseleave", function(x,i) {
+                unHighlight();
+            });
+            
+            selection.exit().remove();
+        }
+        
+        function renderChart(input) {
+            chart
+                .attr("width", chartWidth)
+                .attr("height", chartHeight)
+            
+            var xScale = d3.scale.linear()
+                .range([0, chartInnerWidth])
+                .domain([-1000, d3.max(input, function(x) { return x.income[year]})]);
+           
+            var yScale = d3.scale.linear()
+                .range([chartInnerHeight, 0])
+                .domain(d3.extent(input, function(x) { return x.lifeExpectancy[year]}));
+        
+            var sizeScale = d3.scale.linear()
+                .range([20, 1000])
+                .domain(d3.extent(input, function(x) { return x.population[year]}));
+            
+            var colorScale = d3.scale.category10();
+            
+            var xAxis = d3.svg.axis()
+                .tickSize(-360)
+                .tickFormat(function(x) { 
+                    var prefix = d3.formatPrefix(x);
+                    return prefix.scale(x) + prefix.symbol
+                 })
+                .scale(xScale)
+                .orient("bottom")
+            
+            var yAxis = d3.svg.axis()
+                .tickSize(-440)
+                .scale(yScale)
+                .orient("left")
+            
+            xAxisGroup.call(xAxis);
+            yAxisGroup.call(yAxis);
+            
+            var selection = dotGroup.selectAll("circle")
+                .data(input, function(x) { return x.name })
+            selection.enter()
+                .append("circle")
+                    .on("click", function(x, i) {
+                        alert(x.name)
+                    })
+                    .on('mouseenter', function(x, i) { d3.select("#tooltip").style({top: d3.event.clientY + 5, left: d3.event.clientX + 5, visibility: "visible", opacity: 1 })
+                    d3.select("#tooltip").text(x.name);
+                    highlight(x.name);                               
+                    })
+                    .on('mouseleave', function(x, i) {
+                         d3.select("#tooltip").style({visibility: "hidden", opacity: 0 }) 
+                         unHighlight();
+                       
+                    });
+            selection.exit().remove();
+            
+            selection.transition()
+                .attr("r", function(x) { return Math.sqrt(sizeScale(x.population[year])/Math.PI)})
+                .attr("cx", function(x) { return xScale(x.income[year])})
+                .attr("cy", function(x) { return yScale(x.lifeExpectancy[year])})
+                .attr("fill", function(x) { return colorScale(x.region)})
+                    }
+            
+        
+          function render(input) {
+              var filteredInput = input.filter(function(x) {return x.income[year] && x.lifeExpectancy[year] && x.population[year]; });
+              
+            filteredInput.sort(function(a,b) { return d3.ascending(a.name, b.name)});
+              
+            renderList(filteredInput);
+            renderChart(filteredInput);
+        }
+        
+        d3.json('https://raw.githubusercontent.com/CristianFelix/infoviz/master/Week%203/newData.json', function(error, result){
+                input = result;
+                render(result);
+        })
+        
+    </script>
+</html>

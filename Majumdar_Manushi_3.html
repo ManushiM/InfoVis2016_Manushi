@@ -1,0 +1,88 @@
+<html>
+    <head>
+        <title>Gapminder Wealth and Health</title>
+        <style>
+            body{
+                margin: 0px;
+            }
+            h1{
+                color: white;
+                background-color: black;
+            }
+            h2{
+                padding: 10px;
+            }
+            #page{
+                padding: 10px;
+                float: left;
+            }
+            #dotGroup{
+                float: right;
+            }
+        </style>
+    </head>
+    <body>
+            
+        <h1>Gapiminder - Wealth and Health of Nations</h1>
+        <h2>Countries</h2>
+        <svg width="600" height="400" fill="none">
+        <g id="dotGroup"></g>
+        </svg>
+        <div id="page">
+        </div>
+    </body>
+   <script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script>
+        var viz1 = d3.select("#page");
+        d3.json("newData.json", function(error, result) {
+            input = result;
+            data = input;
+            render();
+            draw(input);
+        })
+        
+        
+        var viz2 = d3.select("#dotGroup");
+        var width = 600,
+            height = 400,
+            margin = { top: 20, left: 10, right: 20, bottom: 20},
+            innderWidth = width - margin.left - margin.right,
+            innerHeight = height - margin.top - margin.bottom;
+        
+        var xScale = d3.scale.linear().range([0, innerWidth]),
+            yScale = d3.scale.linear().range([innerHeight, 0]);
+        
+        
+        viz2.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+        
+        function render() {
+            var changes = viz1.selectAll("div")
+                .data(data, function(x) { return x.name });
+            
+            changes.enter()
+                .append("div")
+                .text(function(x) { return x.name });
+            
+        }
+        
+        function draw(input) {
+            var dataPoints = viz2.selectAll("circle").data(input);
+            
+            xScale.domain(d3.extent(input, function(x) { return x.income[2008] }));
+            yScale.domain(d3.extent(input, function(x) { return x.lifeExpectancy[2008] }))
+            
+            var colorScale = d3.scale.category10();
+           
+           var sizeScale = d3.scale.linear().domain(d3.extent(input, function(x) { return x.population[2008] })).range([5,20]);
+            
+            
+            dataPoints.enter()
+                .append("circle")
+                .attr("r", function(x, i) { return sizeScale(x.population[2008]) })
+                .attr("cx", function(x, i) { return xScale(x.income[2008]) })
+                .attr("cy", function(x, i) { return yScale(x.lifeExpectancy[2008]) })
+                .attr("fill", function(x, i) { return colorScale(x.region) })
+                .attr("opacity", 0.6)
+        }
+    </script>
+</html>

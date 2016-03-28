@@ -1,0 +1,132 @@
+<html>
+    <head>
+        <title>Gapminer</title>
+        <style>
+            body {
+                margin: 0px;
+                font-family: "Arial"
+            }
+            #title {
+                background-color: black;
+                color: white;
+                padding: 10px
+            }
+            h1{
+                margin: 0
+            }
+            .countries {
+                list-style: none;
+                padding: 10px;
+                float: left
+            }
+            circle {
+                opacity: 0.9
+            }
+            .domain {
+                fill: none;
+                stroke: #000
+            }
+            .tick {
+                font-size: 12
+            }
+            .tick line {
+                stroke: #ccc
+            }
+        </style>
+    </head>
+    <body>
+        <div id="title">
+            <h1>Gapminder - Wealth and Health of Nations</h1>
+        </div>
+        <div>
+            <ul class="countries" id="countries"></ul>
+            <svg id="viz"></svg>
+        </div>
+    </body>
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script>
+        //Parameters
+        var year = 2008;
+        var chartWidth = 500;
+        var chartHeight = 400;
+        var chartMargin = {top: 20, left: 40, right: 20, bottom: 20}
+        var chartInnerHeight = chartHeight - chartMargin.top - chartMargin.bottom;
+        var chartInnerWidth = chartWidth - chartMargin.left - chartMargin.right;
+        
+        //Global Variables
+        var list = d3.select("#countries");
+        var chart = d3.select("#viz");
+        var xAxisGroup = chart.append("g")
+            .attr("transform", "translate(" + chartMargin.left + "," + (chartInnerHeight + chartMargin.top) + ")");
+        var yAxisGroup = chart.append("g")
+            .attr("transform", "translate(" + chartMargin.left + "," + chartMargin.top + ")");
+        var dotGroup = chart.append("g")
+            .attr("transform", "translate(" + chartMargin.left + "," + chartMargin.top + ")");
+        
+        
+        function renderList(input){
+            list.selectAll("li")
+                .data(input)
+                .enter()
+                .append("li")
+                .attr("class", "listItem")
+                .text(function(x) { return x.name
+            });
+        }
+        
+        function renderChart(input) {
+            chart
+                .attr("width", chartWidth)
+                .attr("height", chartHeight)
+            
+            var xScale = d3.scale.linear()
+                .range([0, chartInnerWidth])
+                .domain([-1000, d3.max(input, function(x) { return x.income[year]})]);
+           
+            var yScale = d3.scale.linear()
+                .range([chartInnerHeight, 0])
+                .domain(d3.extent(input, function(x) { return x.lifeExpectancy[year]}));
+        
+            var sizeScale = d3.scale.linear()
+                .range([20, 1000])
+                .domain(d3.extent(input, function(x) { return x.population[year]}));
+            
+            var colorScale = d3.scale.category10();
+            
+            var xAxis = d3.svg.axis()
+                .tickSize(-360)
+                .scale(xScale)
+                .orient("bottom")
+            
+            var yAxis = d3.svg.axis()
+                .tickSize(-440)
+                .scale(yScale)
+                .orient("left")
+            
+            xAxisGroup.call(xAxis);
+            yAxisGroup.call(yAxis);
+            
+            dotGroup.selectAll("circle")
+                .data(input)
+                .enter()
+                .append("circle")
+                    .attr("r", function(x) { return Math.sqrt(sizeScale(x.population[year])/Math.PI)})
+                    .attr("cx", function(x) { return xScale(x.income[year])})
+                    .attr("cy", function(x) { return yScale(x.lifeExpectancy[year])})
+                    .attr("fill", function(x) { return colorScale(x.region)})
+            
+        }
+        
+          function render(input) {
+              var filteredInput = input.filter(function(x) {return x.income[year] && x.lifeExpectancy[year] && x.population[year]; });
+              
+            renderList(filteredInput);
+            renderChart(filteredInput);
+        }
+        
+        d3.json('https://raw.githubusercontent.com/CristianFelix/infoviz/master/Week%203/newData.json', function(error, result){
+               render(result);
+        })
+        
+    </script>
+</html>

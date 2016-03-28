@@ -1,0 +1,47 @@
+<html>
+    <head>
+        <title>Assignment1</title>
+        <style>
+            body{
+                margin: 0px;
+            }
+            h1{
+                color: white;
+                background-color: black;
+            }
+            h2{
+                padding: 10px;
+            }
+            li{
+                list-style: none;
+            }
+            #page{
+                padding: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Gapiminder - Wealth and Health of Nations</h1>
+        <h2>Countries</h2>
+        <div id="page">
+            <label>Name</label>
+            <input type="text" id="countryName">
+            <button onclick="addCountry();">Add</button>    
+            <ul id="countries">
+                <li>USA</li>
+                <li>Mexico</li>
+                <li>Canada</li>
+            </ul>
+        </div>
+    </body>
+    <script>
+        function addCountry(){
+            var newCountry = document.getElementById("countryName").value;
+            var countryList = document.getElementById("countries");
+            var newListElement = document.createElement("li");
+            newListElement.innerHTML = newCountry; countryList.appendChild(newListElement);
+            document.getElementById("countryName").value = "";
+            
+        }
+    </script>
+</html>
